@@ -9,16 +9,16 @@ file (and the docs it names) when starting or wrangling a project.
 
 ## What's in this doc set
 
-`CLAUDE.md` (kept with these files) documents the full set. In short, it is three tiers:
+`../CLAUDE.md` (kept with these files) documents the full set. In short, it is three tiers:
 
 1. **Sources** (in `originals/`) — `r-project-organization.md`, `R Working Analysis Directory Tree Template.txt`.
-2. **Canonical conventions** — `RECOMMENDED-CONVENTION.md` (R + Python) and
-   `RECOMMENDED-CONVENTION-R-ONLY.md` (R-only). A pair; pick by whether there's standalone
+2. **Canonical conventions** — `recommendedConvention.md` (R + Python) and
+   `recommendedConventionROnly.md` (R-only). A pair; pick by whether there's standalone
    Python.
-3. **Agent recipes** — `RECIPE-NEW-PROJECT.md` (greenfield) and
-   `RECIPE-WRANGLE-EXISTING.md` (brownfield; plan-then-migrate, gated).
+3. **Agent recipes** (at the repo root) — `../recipeNewProject.md` (greenfield) and
+   `../recipeWrangleExisting.md` (brownfield; plan-then-migrate, gated).
 
-See `CLAUDE.md` for the per-file detail; this note does not duplicate it.
+See `../CLAUDE.md` for the per-file detail; this note does not duplicate it.
 
 ## Standing constraints (the part worth carrying anywhere)
 

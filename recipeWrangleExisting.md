@@ -4,8 +4,8 @@
 project to reorganize. The agent **plans first, stops for human approval, then migrates** —
 it must not move files before approval.
 
-The *why* lives in `RECOMMENDED-CONVENTION.md` (R + Python) and
-`RECOMMENDED-CONVENTION-R-ONLY.md` (R-only). This recipe is the *how*.
+The *why* lives in `docs/recommendedConvention.md` (R + Python) and
+`docs/recommendedConventionROnly.md` (R-only). This recipe is the *how*.
 
 ## Operating rules (read before doing anything)
 
@@ -32,8 +32,8 @@ Survey the project without changing it:
 
 - List the tree (depth ~3), note total size and the largest files/dirs.
 - Detect **shape**: are there standalone `.py` files doing pipeline work (→ treat as **mixed**,
-  target `RECOMMENDED-CONVENTION.md`), or is it all `.R`/`.Rmd` (→ **R-only**, target
-  `RECOMMENDED-CONVENTION-R-ONLY.md`)? If `.py` exists only via `reticulate` calls inside `.R`,
+  target `docs/recommendedConvention.md`), or is it all `.R`/`.Rmd` (→ **R-only**, target
+  `docs/recommendedConventionROnly.md`)? If `.py` exists only via `reticulate` calls inside `.R`,
   it's still R-only.
 - Detect git: is it a repo? Is the working tree clean? Current branch?
 - Find existing analysis dirs and anti-patterns: `data/processed/` or `data/interim/`
@@ -105,7 +105,7 @@ Preconditions: human approved; git repo with a **clean** working tree (commit/st
 not). 
 
 1. Create a branch: `git checkout -b chore/project-layout` (short name, per repo style).
-2. Create the target skeleton dirs (mirror `RECIPE-NEW-PROJECT.md` Step 1, language-aware).
+2. Create the target skeleton dirs (mirror `recipeNewProject.md` Step 1, language-aware).
 3. Execute the move table with **`git mv`** (preserves history). Move data/inputs first, then
    cache/results, then code, then notebooks.
 4. Apply the planned **script-path edits** so scripts read/write the new locations via

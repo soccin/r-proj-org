@@ -1,7 +1,7 @@
 # Recommended Analysis Project Convention (R + Python)
 
 For an **R-only** project (pipeline entirely in R; Python, if any, reached in-process via
-`reticulate`), use the sibling document **`RECOMMENDED-CONVENTION-R-ONLY.md`** instead.
+`reticulate`), use the sibling document **`recommendedConventionROnly.md`** instead.
 
 This reconciles the source documents in this repo into one recommended layout for
 projects that mix **R and Python** code:

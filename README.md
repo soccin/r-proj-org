@@ -13,17 +13,17 @@ deliverables are the Markdown documents below.
 
 **Pick a convention** (the *what* and *why*):
 
-- [`RECOMMENDED-CONVENTION.md`](RECOMMENDED-CONVENTION.md) — for **mixed R + Python**
+- [`docs/recommendedConvention.md`](docs/recommendedConvention.md) — for **mixed R + Python**
   projects. Code splits by language (`R/` + `python/`) over a shared, language-neutral data
   backbone; one numbered `scripts/` pipeline spans both.
-- [`RECOMMENDED-CONVENTION-R-ONLY.md`](RECOMMENDED-CONVENTION-R-ONLY.md) — for **R-only**
+- [`docs/recommendedConventionROnly.md`](docs/recommendedConventionROnly.md) — for **R-only**
   projects. The pipeline is all `.R`; Python, if needed, is reached in-process via
   `reticulate`.
 
 **Run a recipe** (the *how* — written for an AI agent to execute):
 
-- [`RECIPE-NEW-PROJECT.md`](RECIPE-NEW-PROJECT.md) — scaffold a new project to the convention.
-- [`RECIPE-WRANGLE-EXISTING.md`](RECIPE-WRANGLE-EXISTING.md) — migrate an existing project onto
+- [`recipeNewProject.md`](recipeNewProject.md) — scaffold a new project to the convention.
+- [`recipeWrangleExisting.md`](recipeWrangleExisting.md) — migrate an existing project onto
   it. Plan-then-migrate and gated: it analyzes, writes a migration plan, and **stops for your
   approval** before moving anything.
 
@@ -31,13 +31,13 @@ deliverables are the Markdown documents below.
 
 | Path | What it is |
 | --- | --- |
-| `RECOMMENDED-CONVENTION.md` | Canonical layout — R + Python |
-| `RECOMMENDED-CONVENTION-R-ONLY.md` | Canonical layout — R-only |
-| `RECIPE-NEW-PROJECT.md` | Agent recipe — greenfield scaffold |
-| `RECIPE-WRANGLE-EXISTING.md` | Agent recipe — brownfield migration |
-| `PROJECT-LAYOUT-NOTES.md` | Portable carry-along summary + the standing constraints |
+| `recipeNewProject.md` | Agent recipe — greenfield scaffold |
+| `recipeWrangleExisting.md` | Agent recipe — brownfield migration |
+| `docs/recommendedConvention.md` | Canonical layout — R + Python |
+| `docs/recommendedConventionROnly.md` | Canonical layout — R-only |
+| `docs/projectLayoutNotes.md` | Portable carry-along summary + the standing constraints |
+| `docs/originals/` | The two source documents the conventions were reconciled from |
 | `CLAUDE.md` | Guidance for AI agents working *in this repo* |
-| `originals/` | The two source documents the conventions were reconciled from |
 
 ## The core idea, in brief
 
@@ -48,6 +48,6 @@ deliverables are the Markdown documents below.
   (`02_process.R` → `cache/02_processed/`).
 - Data is shared and language-neutral; only the code layer differs between R-only and mixed.
 
-See [`PROJECT-LAYOUT-NOTES.md`](PROJECT-LAYOUT-NOTES.md) for the standing constraints these
+See [`docs/projectLayoutNotes.md`](docs/projectLayoutNotes.md) for the standing constraints these
 docs obey (notably: no added dependencies, and no proprietary interchange formats — `.rds`
 within R, CSV/XLSX only at a cross-language boundary).

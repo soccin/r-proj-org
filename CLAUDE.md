@@ -12,10 +12,10 @@ The repo holds **source documents**, the **reconciled conventions** derived from
 **agent recipes** that operationalize the conventions.
 
 **Canonical (the recommended output — edit these for layout guidance):**
-- `RECOMMENDED-CONVENTION.md` — the recommended layout for **mixed R + Python** projects.
+- `docs/recommendedConvention.md` — the recommended layout for **mixed R + Python** projects.
   Code is split by language (`R/` + `python/`) over a shared, language-neutral data backbone;
   one numbered `scripts/` pipeline spans both languages.
-- `RECOMMENDED-CONVENTION-R-ONLY.md` — the recommended layout for **R-only** projects. The
+- `docs/recommendedConventionROnly.md` — the recommended layout for **R-only** projects. The
   pipeline is all `.R`; Python, if needed, is reached in-process via `reticulate` (an embedded
   dependency, not a parallel codebase). Intermediates stay `.rds`; one `renv.lock`.
 
@@ -24,9 +24,9 @@ cross-reference each other in their intros — keep those pointers intact.
 
 **Recipes (agent-executable — imperative procedures, a different genre from the canonical
 reference docs; they link back to the canonical docs for the *why*):**
-- `RECIPE-NEW-PROJECT.md` — instructions for an agent to scaffold a new project to the
+- `recipeNewProject.md` — instructions for an agent to scaffold a new project to the
   convention (greenfield).
-- `RECIPE-WRANGLE-EXISTING.md` — instructions for an agent to migrate an existing project
+- `recipeWrangleExisting.md` — instructions for an agent to migrate an existing project
   onto the convention (brownfield). It is **plan-then-migrate, gated**: read-only analysis →
   write `MIGRATION-PLAN.md` → STOP for human approval → migrate via `git mv` with git as the
   undo net. When editing it, preserve that approval gate and the "never modify `data/`" rule.
@@ -36,10 +36,10 @@ and keep env/tooling setup as an explicitly optional step. When the convention d
 keep these recipes in sync with them.
 
 **Sources (background — the inputs that were reconciled; do not present as competing anymore;
-they live in `originals/`):**
-- `originals/r-project-organization.md` — the original provenance-based, numbered-stage
+they live in `docs/originals/`):**
+- `docs/originals/r-project-organization.md` — the original provenance-based, numbered-stage
   convention for plain `.R` scripts. The backbone of both canonical docs traces to this.
-- `originals/R Working Analysis Directory Tree Template.txt` — notes excerpted from the external
+- `docs/originals/R Working Analysis Directory Tree Template.txt` — notes excerpted from the external
   `workflowr` package docs (the `analysis/`+`docs/` literate-website scheme), folded into the
   canonical docs as an optional reporting layer.
 

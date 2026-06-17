@@ -6,7 +6,7 @@ entirely in R. Python, when needed, is reached *in-process from R* via
 second codebase.
 
 > For projects with substantial standalone Python code (its own `.py` pipeline stages and
-> `pyproject.toml`), use the sibling document **`RECOMMENDED-CONVENTION.md`** (R + Python,
+> `pyproject.toml`), use the sibling document **`recommendedConvention.md`** (R + Python,
 > split by language) instead. This document is the simpler, single-language case.
 
 It reconciles the two source docs in this repo:
@@ -189,7 +189,7 @@ for an R-only project), redirect its processed-data writes into `cache/NN_stage/
 | The above, plus exploration | add `notebooks/` (`.Rmd`/`.qmd`) |
 | The above, plus a narrative report or published site | add the `analysis/` + `docs/` layer (`workflowr`) |
 | Need a Python library R lacks | call it from an R stage via `reticulate`; record it in `renv.lock` |
-| Substantial standalone Python code / `.py` pipeline stages | use the R+Python doc (`RECOMMENDED-CONVENTION.md`) instead |
+| Substantial standalone Python code / `.py` pipeline stages | use the R+Python doc (`recommendedConvention.md`) instead |
 | A one-off exploratory script | a single script reading `data/`, writing `results/` — don't over-build |
 
 ---

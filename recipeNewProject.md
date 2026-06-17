@@ -4,8 +4,8 @@
 agent at it) and tell the agent which project directory to set up. The agent should follow
 the numbered steps and run each verification before moving on.
 
-The *why* behind this structure lives in `RECOMMENDED-CONVENTION.md` (R + Python) and
-`RECOMMENDED-CONVENTION-R-ONLY.md` (R-only). This recipe is the *how*. Read the matching
+The *why* behind this structure lives in `docs/recommendedConvention.md` (R + Python) and
+`docs/recommendedConventionROnly.md` (R-only). This recipe is the *how*. Read the matching
 convention doc if a choice here is unclear; do not invent structure beyond it.
 
 **Hard constraints (do not violate):**
@@ -23,9 +23,9 @@ Decide, by asking the user if unstated:
 - **Target directory?** (the project root to create/populate)
 - **R-only, or R + Python?**
   - *R-only* — pipeline is all `.R`; Python (if ever) via `reticulate`. Follow
-    `RECOMMENDED-CONVENTION-R-ONLY.md`. **Do not create `python/`.**
+    `docs/recommendedConventionROnly.md`. **Do not create `python/`.**
   - *R + Python* — standalone `.py` pipeline stages alongside `.R`. Follow
-    `RECOMMENDED-CONVENTION.md`. **Create `python/` and a Python dep file.**
+    `docs/recommendedConvention.md`. **Create `python/` and a Python dep file.**
 - **Optional layers wanted?** `notebooks/` (exploration), `analysis/` + `docs/` (workflowr
   report/site). Default: skip both unless asked.
 
