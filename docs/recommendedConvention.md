@@ -293,6 +293,6 @@ backbone plus per-language code dirs; add layers only when a real need appears.
   canonical Python data-science layout (`data/{raw,external,interim,processed}`, module dir,
   numbered notebooks, immutable raw data).
 - [workflowr getting started](https://jdblischak.github.io/workflowr/articles/wflow-01-getting-started.html)
-  — the `analysis/` + `docs/` literate-website convention (also captured in this repo's `.txt`).
+  — the `analysis/` + `docs/` literate-website convention.
 - [Reproducible environments for R and Python](https://occasionaldivergences.com/posts/rep-env/)
   — `renv` + `reticulate` for joint R/Python dependency management.
