@@ -52,8 +52,12 @@ scripts/
 
 Create placeholder files so empty dirs are tracked and intent is documented:
 
-- `data/raw/MANIFEST.tsv` — header row only: `file`, `bytes`, `md5`, `source`, `date`. This
-  is the tracked record of raw inputs whose bytes are not committed (Step 3).
+- `data/raw/MANIFEST.tsv` — header row only: `name`, `size`, `md5`, `source`, `date` (the
+  columns the convention docs specify). This is the tracked record of raw inputs whose bytes
+  are not committed (Step 3).
+- `scripts/00_fetch_data.R` — a stub, commented out, that rebuilds `data/raw/` from the
+  sources named in the manifest. It is the manifest's other half: together they are what
+  makes ignoring the raw bytes safe (Step 3), so create it now even while it is empty.
 - `data/README.md` — the narrative a table can't hold: who provided the data, under what
   terms, known caveats.
 - `cache/.gitkeep`, `results/figures/.gitkeep`, `results/tables/.gitkeep`.
@@ -67,7 +71,9 @@ Create placeholder files so empty dirs are tracked and intent is documented:
   one, `here::here()` silently resolves to the working directory.
 
 **Verify:** the tree matches the "Recommended Structure" block in the matching convention
-doc (minus any optional layers). List the created paths.
+doc (minus any optional layers) — including `scripts/00_fetch_data.R`, the root anchor and
+the entry point, which the structure block lists and which are easy to skip. List the
+created paths.
 
 ---
 
