@@ -56,6 +56,9 @@ optional `analysis/`+`docs/` layer. Don't reintroduce that conflict.
   (`01_tidy_input.R` → `cache/run02/01_tidy/`), so the dependency graph is visible in
   filenames. In the mixed doc the numbering spans both languages. A `run_all.R` (R-only) or
   `run_all.sh` (mixed) at the root enforces the order the filenames only document.
+  `run_all.sh` invokes `.py` stages as `"$PYTHON"` (set once as
+  `PYTHON="${PYTHON:-.venv/bin/python}"`), **never a bare `python`** — PATH resolution picks
+  the system interpreter and defeats the lockfiles.
 - **The run axis is secondary to provenance, and separate from the stage axis.** A project
   runs more than once, so `cache/` and `results/` carry a run directory level — run outermost,
   stage one level down (`cache/run02/01_tidy/`, `results/run02/{figures,tables}`). **`data/`
@@ -88,15 +91,22 @@ optional `analysis/`+`docs/` layer. Don't reintroduce that conflict.
   bare `results/figures/` matches nothing now. Raw data is
   **ignore-the-bytes / commit-the-provenance**: `data/raw/*` ignored with
   `!data/raw/MANIFEST.tsv` un-ignored, plus `scripts/00_fetch_data.R` to rebuild it. This
-  reversed an earlier "never gitignore `data/`" rule — do not flip it back.
+  reversed an earlier "never gitignore `data/`" rule — do not flip it back. The manifest
+  columns are **name, size, md5, source, date**; the recipes drifted from the convention docs
+  on this once, so check both sides when touching either.
 
 ## Working Notes
 
 - This **is** a git repository (`origin git@github.com:soccin/r-proj-org.git`, default branch
   `master`). Work on a short-named branch; commit only when asked; never push unasked.
-- Keep the four cross-referencing documents in sync. A convention change touches
-  `README.md`, both `docs/recommendedConvention*.md`, `docs/projectLayoutNotes.md`, both
-  recipes, and this file. Grep before declaring a change done.
+- Keep all seven documents in sync. A convention change touches `README.md`, both
+  `docs/recommendedConvention*.md`, `docs/projectLayoutNotes.md`, both recipes, and this
+  file. Grep before declaring a change done.
+- **The run axis has never been used on a real project.** It was designed 2026-08-10 and
+  merged the same day; every example in the docs is invented. The first real test is
+  `Proj_18671` (scRNA-seq, four coexisting version schemes). Expect the first use to expose
+  something — treat a conflict between these docs and what actually worked there as evidence
+  the docs are wrong, not the project.
 - **Open question — how a released run is marked.** A run whose outputs went to a
   collaborator must never be overwritten; that rule is stated in both convention docs. The
   *mechanism* is deliberately unspecified pending the user's own experiments — candidates are
