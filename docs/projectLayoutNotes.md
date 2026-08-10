@@ -28,7 +28,10 @@ These are how I want R / data work organized — layout guidance, **not** a tool
 They apply to these docs and to any project built or migrated from them:
 
 - **Add no dependencies** to satisfy layout. The docs organize folders/files; they must not
-  require new packages.
+  require new packages. **One deliberate exception:** the run file `00.PARAMS.yml` needs a
+  YAML reader (`yaml` in R, `pyyaml` in Python). Taken knowingly — the alternative was putting
+  the run id in a language-specific config file, which breaks the language-neutral backbone.
+  It is not a licence for a second exception.
 - **No proprietary/binary interchange formats** — explicitly **no Parquet, no Arrow/Feather**.
 - **Intermediates:** R-native = `.rds`. Cross-language *file* handoff = **CSV or XLSX only**.
   (In an R-only project that calls Python via `reticulate`, data crosses in memory — there is
@@ -48,11 +51,16 @@ large inputs are reconstructed from a manifest rather than stored.
 
 Provenance is the primary axis: `data/` is read-only external input (never written by
 scripts), `cache/` is regenerable intermediate output (gitignored), `results/` is final
-output. Number the pipeline stages so a script and its output dir share a prefix
-(`02_process.R` → `cache/02_processed/`), and give the project a `run_all.R` / `run_all.sh`
-entry point that runs them in order. Anchor the root so `here::here()` resolves (`.Rproj`, or
-a bare `.here` from `here::set_here()`). Track `data/external/` and `results/tables/`; ignore
-`cache/`, `results/figures/`, and the raw bytes under `data/raw/` — those are reconstructed
+output. The **run** is a secondary axis on the two derived tiers only: `cache/run02/01_tidy/`,
+`results/run02/{figures,tables}` — run outermost, stage one level down, never both in one
+filename, and never any run level under `data/`. The current run id is a top-level `run:` key
+in `00.PARAMS.yml` at the project root (language-neutral by design; the entry point copies it
+into the run's `results/` dir). Number the pipeline stages so a script and its output dir
+share a prefix (`02_process.R` → `cache/run02/02_processed/`), and give the project a
+`run_all.R` / `run_all.sh` entry point that runs them in order. Anchor the root so
+`here::here()` resolves (`.Rproj`, or a bare `.here` from `here::set_here()`). Track
+`data/external/`, `results/*/tables/` and `results/*/00.PARAMS.yml`; ignore `cache/`,
+`results/*/figures/`, and the raw bytes under `data/raw/` — those are reconstructed
 from `MANIFEST.tsv` plus `scripts/00_fetch_data.R`. Data is shared and language-neutral; only
 the code layer splits by language. Staged `cache/` is preferred over both `data/processed/`
 and a flat `output/`; `workflowr` is retained only as an optional `analysis/`+`docs/`

@@ -52,11 +52,12 @@ project/
 ├── .Rprofile               # runs on open; load R libs; pin RETICULATE_PYTHON if using reticulate
 ├── .gitignore
 ├── README.md               # what this is; how to rebuild it
+├── 00.PARAMS.yml           # the CURRENT run id + this run's parameters — see "The Run Axis"
 ├── run_all.R               # sources scripts in order — the pipeline entry point
 │
 ├── renv.lock               # R packages — AND Python packages if reticulate is used
 │
-│  ── DATA: named by provenance ──
+│  ── DATA: named by provenance (no run axis — inputs are the same every run) ──
 ├── data/                   # IMMUTABLE inputs — never written by scripts
 │   ├── raw/                #   exactly as received
 │   │   └── MANIFEST.tsv    #     provenance: name, size, md5, source, date
@@ -64,13 +65,16 @@ project/
 │   └── README.md           #   narrative: where the data came from, from whom, caveats
 │
 ├── cache/                  # REGENERABLE intermediates (.rds) — safe to delete, gitignored
-│   ├── 01_tidy/            #   output dir prefix matches the script that made it
-│   ├── 02_processed/
-│   └── 03_filtered/
+│   └── run02/              #   RUN axis outermost; STAGE axis one level down
+│       ├── 01_tidy/        #     output dir prefix matches the script that made it
+│       ├── 02_processed/
+│       └── 03_filtered/
 │
 ├── results/                # FINAL outputs
-│   ├── figures/            #   often large → gitignore
-│   └── tables/             #   often small → track in git
+│   └── run02/              #   one dir per run — never reused for a different parameter set
+│       ├── 00.PARAMS.yml   #     copy of the root file, as this run was launched
+│       ├── figures/        #     often large → gitignore
+│       └── tables/         #     often small → track in git
 │
 │  ── CODE ──
 ├── R/                      # reusable R functions (sourced), NOT run as scripts
@@ -78,9 +82,9 @@ project/
 │
 ├── scripts/                # the ordered pipeline — ALL .R, numbered by stage
 │   ├── 00_fetch_data.R     #   run once — rebuilds data/raw/ from its sources
-│   ├── 01_tidy_input.R     #   reads data/raw/      → writes cache/01_tidy/
-│   ├── 02_process.R        #   reads cache/01_tidy/ → writes cache/02_processed/
-│   └── 03_analyze.R        #   reads cache/02_...   → writes results/  (may call Python via reticulate)
+│   ├── 01_tidy_input.R     #   reads data/raw/            → writes cache/run02/01_tidy/
+│   ├── 02_process.R        #   reads cache/run02/01_tidy/ → writes cache/run02/02_processed/
+│   └── 03_analyze.R        #   reads cache/run02/02_...   → writes results/run02/  (may use reticulate)
 │
 ├── notebooks/              # OPTIONAL exploratory .Rmd / .qmd
 │                           #   name: NN_initials_topic, e.g. 01_ns_data-overview
@@ -103,11 +107,12 @@ The `notebooks/` and `analysis/` blocks are **optional**. The backbone
 
 The names carry intent: anyone sees `cache/` and knows it's disposable. Read-only is a
 property of `data/`, not of whether it is tracked — see the `.gitignore` section for what
-gets committed.
+gets committed. Provenance stays the *primary* axis; the run axis below is secondary and
+applies only to the two derived tiers.
 
 **2. Number the pipeline stages.** A stage's script and its output dir share a prefix
-(`02_process.R` → `cache/02_processed/`). Six months later the dependency graph is readable
-from filenames alone.
+(`02_process.R` → `cache/run02/02_processed/`). Six months later the dependency graph is
+readable from filenames alone.
 
 **3. Read-only vs. write-enabled stays strict.** Every script reads from `data/`/`cache/`
 and writes to `cache/`/`results/`. Never write into `data/`.
@@ -131,6 +136,86 @@ think they were.
 
 ---
 
+## The Run Axis
+
+A project does not run once. Parameters change, and the second pass must not silently
+overwrite the first — least of all when the first pass already went to a collaborator.
+
+**The run is a directory level; the stage stays a numeric filename prefix one level down.**
+The two axes never share a namespace. `cache/run02/01_tidy/` is unambiguous in a way
+`proj_v1.01_raw.rds` is not — there, run 1 stage 01 reads as a decimal and both axes are lost
+in one token. Never encode a run in a filename.
+
+The axis covers derived files only. `cache/` and `results/` gain a run level; **`data/` never
+does.** Inputs are the same every run — that is what makes them inputs.
+
+### `00.PARAMS.yml`
+
+One file at the project root declares the current run:
+
+```yaml
+run: run02
+
+params:
+  resolution: 0.4
+  sketch: true
+```
+
+The convention requires exactly one thing: a **top-level `run:` key**, whose value is used
+*verbatim* as the directory name. `run02`, `run_02`, `run02_res04` are all fine — the
+convention does not police the string. Everything else in the file belongs to the project;
+group it under `params:`, `args:`, `const:`, whatever suits. That namespace is yours.
+
+Three properties make this the right file:
+
+- **It is language-neutral.** R, Python and shell all read it. Putting the run id in an `.R`
+  file would privilege one language inside a data backbone that is deliberately neutral.
+- **It stands alone.** One short file at the root, obvious to find and obvious to edit.
+  Starting a new run is a one-line change that shows up in `git diff`. Do not bury the run id
+  in a hundred lines of analysis config.
+- **`run:` stays greppable.** Because it is required to be top-level and scalar, shell can
+  pull it out with `awk '/^run:/ {print $2}'` — no YAML parser needed at the seam that has no
+  good one.
+
+> **The one added dependency.** Reading this file needs `yaml` in R (`pyyaml` in Python) —
+> the single deliberate exception to this repo's "add no dependencies" rule. The alternative
+> was a run id in an R file, which breaks the language-neutral backbone. YAML is plain text
+> and non-proprietary, `cat` still reads it, and any project that renders `.Rmd` already has
+> `yaml` installed.
+
+Every script reads it the same way, at the top, next to the other path definitions:
+
+```r
+PARAMS <- yaml::read_yaml(here("00.PARAMS.yml"))
+RUN_ID <- PARAMS$run
+```
+
+### When to bump `run:`
+
+Bump it when the **parameters change**. Re-running the same id after fixing a bug in stage 03
+is the *same* run — do not bump for that, or you trade one kind of sprawl for another.
+Nothing enforces this; it is a rule, not a mechanism.
+
+One rule is hard, though: **a run whose outputs left the building is never overwritten.** Once
+a figure or a number is in a collaborator's hands, that run directory is frozen — start a new
+run instead. How a released run is *marked* (a git tag, a manifest, a sub-folder) is
+deliberately not specified yet.
+
+### Reusing an expensive stage
+
+Per-run `cache/` means a new run recomputes from stage 01, which is waste when an early stage
+is genuinely unchanged. Symlink it:
+
+```sh
+ln -s ../run01/01_tidy cache/run02/01_tidy
+```
+
+The symlink is a visible, deliberate claim that the stage is identical. Never point one at a
+stage whose inputs or parameters actually moved — that is precisely the staleness this layout
+otherwise makes impossible.
+
+---
+
 ## In Practice
 
 Define paths at the top of each script so they work regardless of working directory:
@@ -138,12 +223,15 @@ Define paths at the top of each script so they work regardless of working direct
 ```r
 library(here)
 
-# Inputs
+PARAMS <- yaml::read_yaml(here("00.PARAMS.yml"))
+RUN_ID <- PARAMS$run
+
+# Inputs — no run axis
 input_dir  <- here("data", "raw")
 ref_dir    <- here("data", "external")
 
-# Outputs
-out_dir    <- here("cache", "01_tidy")
+# Outputs — run axis, then stage
+out_dir    <- here("cache", RUN_ID, "01_tidy")
 fs::dir_create(out_dir)   # safe no-op if it exists
 
 # Read
@@ -169,6 +257,13 @@ The numbered filenames *document* the execution order. `run_all.R` *enforces* it
 # run_all.R
 library(here)
 
+RUN_ID  <- yaml::read_yaml(here("00.PARAMS.yml"))$run
+run_dir <- here("results", RUN_ID)
+fs::dir_create(run_dir)
+
+# Freeze what produced this run, before anything writes
+fs::file_copy(here("00.PARAMS.yml"), run_dir, overwrite = TRUE)
+
 # source(here("scripts", "00_fetch_data.R"))   # run once — populates data/raw/
 
 source(here("scripts", "01_tidy_input.R"))
@@ -179,6 +274,11 @@ source(here("scripts", "03_analyze.R"))
 Run it with `Rscript run_all.R` from anywhere in the project. Keeping this file working is
 the cheapest reproducibility check available: if it does not run end to end in a fresh
 session, the project is not reproducible, whatever the directory structure suggests.
+
+The copy of `00.PARAMS.yml` into the run directory is what makes a run self-explaining. The
+root file always describes the *current* run; the copy in `results/run02/` records what run 02
+actually used, and it is tracked in git alongside that run's tables. This is the
+`data/raw/MANIFEST.tsv` argument — commit the provenance, not the bytes — applied to outputs.
 
 ---
 
@@ -215,7 +315,7 @@ The point: even with Python in play, there is **one** lockfile and **one** resto
 ```
 # Derived — regenerate from scripts
 cache/
-results/figures/
+results/*/figures/
 
 # Rendered report (only if using analysis/)
 analysis/docs/
@@ -229,10 +329,16 @@ renv/             # project library (keep renv.lock, ignore the library)
 # reticulate's Python env lives under renv/ when created via renv::use_python()
 
 # NOT ignored:
-#   data/external/  <- reference files are usually small; commit them
-#   results/tables/ <- usually small; useful to track changes over time
-#   renv.lock       <- the reproducibility record (R + Python)
+#   data/external/           <- reference files are usually small; commit them
+#   results/*/tables/        <- usually small; useful to track changes over time
+#   results/*/00.PARAMS.yml  <- what produced that run
+#   00.PARAMS.yml            <- the current run
+#   renv.lock                <- the reproducibility record (R + Python)
 ```
+
+Note the figures pattern is `results/*/figures/`, not `results/figures/` — figures sit one
+level down now, under the run directory. The plain pattern would match nothing and quietly
+start committing every figure.
 
 Large inputs — FASTQs, BAMs, count matrices — have to stay out of git. History is
 append-only, so a single accidental multi-gigabyte commit permanently inflates every future
@@ -269,7 +375,7 @@ you end up with `data/processed_v2/` or timestamped directory names.
 **`workflowr`'s flat `output/`** has the same scaling problem and is equally ambiguous about
 immutability. Numbered `cache/` stages scale to any depth and stay self-documenting. If you
 adopt `workflowr` for its `.Rmd` → website tooling (a natural fit for an R-only project),
-redirect its processed-data writes into `cache/NN_stage/` and keep `docs/` strictly for
+redirect its processed-data writes into `cache/<run>/NN_stage/` and keep `docs/` strictly for
 rendered HTML.
 
 ---
@@ -281,6 +387,7 @@ rendered HTML.
 | Pure scripted R processing, no report | backbone only (`data/`→`scripts/`→`cache/`→`results/`) |
 | The above, plus exploration | add `notebooks/` (`.Rmd`/`.qmd`) |
 | The above, plus a narrative report or published site | add the `analysis/` + `docs/` layer (`workflowr`) |
+| A second pass with different parameters | bump `run:` in `00.PARAMS.yml` — see The Run Axis |
 | Need a Python library R lacks | call it from an R stage via `reticulate`; record it in `renv.lock` |
 | Substantial standalone Python code / `.py` pipeline stages | use the R+Python doc (`recommendedConvention.md`) instead |
 | A one-off exploratory script | a single script reading `data/`, writing `results/` — don't over-build |

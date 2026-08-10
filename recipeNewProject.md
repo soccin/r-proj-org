@@ -43,15 +43,23 @@ data/
   raw/
   external/
 results/
-  figures/
-  tables/
-cache/                # may stay empty; pipeline stages create cache/NN_* dirs as needed
+  run01/              # RUN axis: one dir per run, outermost
+    figures/
+    tables/
+cache/                # may stay empty; stages create cache/<run>/NN_* dirs as needed
 R/
 scripts/
 ```
 
 Create placeholder files so empty dirs are tracked and intent is documented:
 
+- `00.PARAMS.yml` at root — the run file. Required content is one top-level key:
+  ```yaml
+  run: run01
+  ```
+  Add a `params:` block only if the user already knows the project's parameters; the
+  namespace under `run:` is the project's own. The value is used **verbatim** as the run
+  directory name, so it must match the `results/<run>/` dir created above.
 - `data/raw/MANIFEST.tsv` — header row only: `name`, `size`, `md5`, `source`, `date` (the
   columns the convention docs specify). This is the tracked record of raw inputs whose bytes
   are not committed (Step 3).
@@ -60,7 +68,7 @@ Create placeholder files so empty dirs are tracked and intent is documented:
   makes ignoring the raw bytes safe (Step 3), so create it now even while it is empty.
 - `data/README.md` — the narrative a table can't hold: who provided the data, under what
   terms, known caveats.
-- `cache/.gitkeep`, `results/figures/.gitkeep`, `results/tables/.gitkeep`.
+- `cache/.gitkeep`, `results/run01/figures/.gitkeep`, `results/run01/tables/.gitkeep`.
 - `README.md` at root — one paragraph: what the project is, how to rebuild it
   (`renv::restore()`, then `scripts/00_fetch_data.R` once, then the entry point), and which
   languages do what.
@@ -69,8 +77,9 @@ Create placeholder files so empty dirs are tracked and intent is documented:
   the Pipeline" in `docs/recommendedConvention.md`: `set -euo pipefail`, `Rscript` for `.R`
   stages, and `"$PYTHON"` — set once as `PYTHON="${PYTHON:-.venv/bin/python}"` — for `.py`
   stages. Do not emit a bare `python`; it resolves to whatever is on `PATH`, which is not the
-  environment the lockfiles describe. Create it with the stages commented out; uncomment as
-  stages are written.
+  environment the lockfiles describe. Before the stages, it must read `run:` from
+  `00.PARAMS.yml`, create `results/<run>/`, and copy `00.PARAMS.yml` into it — the same block
+  shows this. Create it with the stages commented out; uncomment as stages are written.
 - A **root anchor**: `project.Rproj`, or a bare `.here` file if not using RStudio. Without
   one, `here::here()` silently resolves to the working directory.
 
@@ -93,8 +102,8 @@ created paths.
 - Do **not** create `python/`. (If reticulate is later needed, Python wrappers live in `R/`.)
 
 In both cases, add a short comment header convention note to `README.md`: every script reads
-from `data/`/`cache/`, writes only to `cache/`/`results/`, and shares a numeric prefix with
-its `cache/NN_*` output dir.
+from `data/`/`cache/`, writes only to `cache/`/`results/`, reads its run id from
+`00.PARAMS.yml`, and shares a numeric prefix with its `cache/<run>/NN_*` output dir.
 
 **Verify:** mixed projects have `python/<pkg>/__init__.py` and no stray top-level `.py`;
 R-only projects have no `python/`.
@@ -108,7 +117,7 @@ Create `.gitignore` at root:
 ```
 # Derived — regenerate from scripts
 cache/
-results/figures/
+results/*/figures/
 
 # Rendered report (only if using analysis/)
 analysis/docs/
@@ -125,7 +134,9 @@ __pycache__/
 
 # Keep:
 #   data/external/            (reference files, usually small)
-#   results/tables/           (small, track changes)
+#   results/*/tables/         (small, track changes)
+#   results/*/00.PARAMS.yml   (what produced that run)
+#   00.PARAMS.yml             (the current run)
 #   renv.lock, pyproject.toml (reproducibility record)
 ```
 
@@ -138,13 +149,17 @@ multi-gigabyte commit that would inflate every future clone forever. Two caution
 
 - The pattern must be `data/raw/*`, not `data/raw/`. Git cannot re-include a file whose
   parent *directory* is excluded, so the `!` line would silently do nothing.
+- The figures pattern must be `results/*/figures/`, not `results/figures/` — figures live one
+  level down, under the run dir. The plain pattern matches nothing and every figure gets
+  committed.
 - Small raw inputs (sample sheet, gene list, config table) belong in git directly. Add an
   explicit un-ignore per file, e.g. `!data/raw/samplesheet.csv`. The rule is about size,
   not about the directory.
 
-**Verify:** `data/external/`, `data/raw/MANIFEST.tsv` and `results/tables/` are NOT ignored;
-`cache/`, `results/figures/` and the raw bytes ARE. Confirm with
-`git check-ignore -v data/raw/MANIFEST.tsv` (should report no match).
+**Verify:** `data/external/`, `data/raw/MANIFEST.tsv`, `00.PARAMS.yml` and
+`results/run01/tables/` are NOT ignored; `cache/`, `results/run01/figures/` and the raw bytes
+ARE. Confirm with `git check-ignore -v data/raw/MANIFEST.tsv` (no match) and
+`git check-ignore -v results/run01/figures/x.pdf` (matches).
 
 ---
 
@@ -180,5 +195,6 @@ pins the interpreter when reticulate is in use.
 - Report what was created and what was deliberately skipped (optional layers, env setup).
 
 **Done when:** the skeleton matches the convention; `.gitignore` ignores `cache/`,
-`results/figures/` and the raw bytes while keeping `MANIFEST.tsv` and `data/external/`;
-a root anchor and an entry point exist; and the report states exactly what exists.
+`results/*/figures/` and the raw bytes while keeping `MANIFEST.tsv` and `data/external/`;
+a root anchor, a `00.PARAMS.yml` and an entry point exist, with the run id in `00.PARAMS.yml`
+matching the `results/<run>/` dir; and the report states exactly what exists.
