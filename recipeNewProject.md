@@ -52,10 +52,19 @@ scripts/
 
 Create placeholder files so empty dirs are tracked and intent is documented:
 
-- `data/README.md` — a provenance template (table: file | source | date received | from whom).
+- `data/raw/MANIFEST.tsv` — header row only: `file`, `bytes`, `md5`, `source`, `date`. This
+  is the tracked record of raw inputs whose bytes are not committed (Step 3).
+- `data/README.md` — the narrative a table can't hold: who provided the data, under what
+  terms, known caveats.
 - `cache/.gitkeep`, `results/figures/.gitkeep`, `results/tables/.gitkeep`.
 - `README.md` at root — one paragraph: what the project is, how to rebuild it
-  (`renv::restore()` then run `scripts/` in order), and which languages do what.
+  (`renv::restore()`, then `scripts/00_fetch_data.R` once, then the entry point), and which
+  languages do what.
+- An **entry point** at the root: `run_all.R` for R-only (`source(here("scripts", "NN_....R"))`
+  per stage) or `run_all.sh` for mixed (`Rscript` / `python` per stage, `set -euo pipefail`).
+  Create it with the stages commented out; uncomment as stages are written.
+- A **root anchor**: `project.Rproj`, or a bare `.here` file if not using RStudio. Without
+  one, `here::here()` silently resolves to the working directory.
 
 **Verify:** the tree matches the "Recommended Structure" block in the matching convention
 doc (minus any optional layers). List the created paths.
@@ -94,6 +103,10 @@ results/figures/
 # Rendered report (only if using analysis/)
 analysis/docs/
 
+# Raw data: ignore the bytes, commit the provenance
+data/raw/*
+!data/raw/MANIFEST.tsv
+
 # Environments
 renv/
 .venv/
@@ -101,7 +114,7 @@ __pycache__/
 *.pyc
 
 # Keep:
-#   data/                     (precious — provenance in data/README.md)
+#   data/external/            (reference files, usually small)
 #   results/tables/           (small, track changes)
 #   renv.lock, pyproject.toml (reproducibility record)
 ```
@@ -109,8 +122,19 @@ __pycache__/
 Drop the `.venv/`/`__pycache__/` lines for an R-only project; drop the `analysis/docs/` line
 if no `analysis/` layer.
 
-**Verify:** `data/` and `results/tables/` are NOT ignored; `cache/` and `results/figures/`
-ARE ignored.
+The raw-data rule is **ignore the bytes, commit the provenance** — `MANIFEST.tsv` plus
+`scripts/00_fetch_data.R` reconstruct `data/raw/` in a few kilobytes, without a
+multi-gigabyte commit that would inflate every future clone forever. Two cautions:
+
+- The pattern must be `data/raw/*`, not `data/raw/`. Git cannot re-include a file whose
+  parent *directory* is excluded, so the `!` line would silently do nothing.
+- Small raw inputs (sample sheet, gene list, config table) belong in git directly. Add an
+  explicit un-ignore per file, e.g. `!data/raw/samplesheet.csv`. The rule is about size,
+  not about the directory.
+
+**Verify:** `data/external/`, `data/raw/MANIFEST.tsv` and `results/tables/` are NOT ignored;
+`cache/`, `results/figures/` and the raw bytes ARE. Confirm with
+`git check-ignore -v data/raw/MANIFEST.tsv` (should report no match).
 
 ---
 
@@ -129,8 +153,9 @@ first.
 - `renv::use_python()` to create a project-local Python env recorded *inside* `renv.lock`;
   pin the interpreter in `.Rprofile`. One lockfile, one `renv::restore()`.
 
-Also create `project.Rproj` (root anchor) and `.Rprofile` (load libs; set `RETICULATE_PYTHON`
-if applicable) — these are cheap and worth adding even when skipping the lockfile work.
+Also create `.Rprofile` (load libs; set `RETICULATE_PYTHON` if applicable) — cheap and worth
+adding even when skipping the lockfile work. The root anchor itself was already created in
+Step 1.
 
 **Verify:** if run, `renv.lock` exists; for mixed, the Python dep file exists; `.Rprofile`
 pins the interpreter when reticulate is in use.
@@ -144,5 +169,6 @@ pins the interpreter when reticulate is in use.
   and no proprietary formats introduced.
 - Report what was created and what was deliberately skipped (optional layers, env setup).
 
-**Done when:** the skeleton matches the convention, `.gitignore` protects `data/` and ignores
-`cache/`, and the report states exactly what exists.
+**Done when:** the skeleton matches the convention; `.gitignore` ignores `cache/`,
+`results/figures/` and the raw bytes while keeping `MANIFEST.tsv` and `data/external/`;
+a root anchor and an entry point exist; and the report states exactly what exists.

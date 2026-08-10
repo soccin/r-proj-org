@@ -8,8 +8,10 @@ This is a **documentation/reference repository**, not a software project. It con
 no code, build, or test setup — only prose documents describing how to lay out
 R/tidyverse analysis projects. Work here is editing Markdown, not running R.
 
-The repo holds **source documents**, the **reconciled conventions** derived from them, and
-**agent recipes** that operationalize the conventions.
+The repo holds the **canonical conventions** and the **agent recipes** that operationalize
+them. Nothing else. Superseded documents are deleted, not archived in place — `ATTIC.md`
+lists them with the git ref each can be recovered from. Do not reintroduce an `originals/`
+or `archive/` directory; if a document is retired, delete it and add a row to `ATTIC.md`.
 
 **Canonical (the recommended output — edit these for layout guidance):**
 - `docs/recommendedConvention.md` — the recommended layout for **mixed R + Python** projects.
@@ -35,13 +37,11 @@ Both recipes branch internally on R-only vs. mixed (rather than splitting into f
 and keep env/tooling setup as an explicitly optional step. When the convention docs change,
 keep these recipes in sync with them.
 
-**Sources (background — the inputs that were reconciled; do not present as competing anymore;
-they live in `docs/originals/`):**
-- `docs/originals/r-project-organization.md` — the original provenance-based, numbered-stage
-  convention for plain `.R` scripts. The backbone of both canonical docs traces to this.
-- `docs/originals/R Working Analysis Directory Tree Template.txt` — notes excerpted from the external
-  `workflowr` package docs (the `analysis/`+`docs/` literate-website scheme), folded into the
-  canonical docs as an optional reporting layer.
+**Retired sources:** the canonical docs were reconciled from a provenance-based
+numbered-stage convention for plain `.R` scripts and from notes on the external `workflowr`
+scheme. Both are now **fully absorbed** and deleted from the working tree; see `ATTIC.md`.
+Treat the canonical docs as self-contained — do not cite `originals/`, and do not re-add
+those files.
 
 The earlier "competing conventions" tension is **resolved** in the canonical docs: the staged
 `cache/` model wins over `workflowr`'s flat `output/`; `workflowr` is retained only as the
@@ -49,25 +49,35 @@ optional `analysis/`+`docs/` layer. Don't reintroduce that conflict.
 
 ## Core Conventions (shared by both canonical docs — preserve when editing)
 
-- **Provenance split:** `data/` is read-only external input (never written by scripts, never
-  gitignored); `cache/` is regenerable intermediate output; `results/` is final output.
+- **Provenance split:** `data/` is read-only external input (never written by scripts);
+  `cache/` is regenerable intermediate output; `results/` is final output. Read-only is about
+  *writes*, not about *tracking* — see the gitignore rule below.
 - **Numbered pipeline stages:** scripts and their output dirs share a prefix
   (`01_tidy_input.R` → `cache/01_tidy/`), so the dependency graph is visible in filenames.
-  In the mixed doc the numbering spans both languages.
+  In the mixed doc the numbering spans both languages. A `run_all.R` (R-only) or `run_all.sh`
+  (mixed) at the root enforces the order the filenames only document.
 - **Data is shared, code splits by language.** The data backbone is language-neutral; only
   code/environment dirs differ between the two docs.
 - **No new dependencies / no proprietary interchange formats** (a hard constraint from the
   user). These are layout docs, not toolchain mandates. R-native intermediates use `.rds`;
   cross-language file handoff, when unavoidable, is **CSV or XLSX only** — never Parquet/Arrow.
-- **R idioms in examples:** `here::here()` for paths, `fs::dir_create()`,
-  `read_csv(show_col_types = FALSE)`. Match these and the tidyverse-first style in the user's
-  global instructions.
-- **The `.gitignore` split:** `cache/` and `results/figures/` ignored; `data/` and
-  `results/tables/` tracked; lockfiles (`renv.lock`, `pyproject.toml`) tracked.
+- **R idioms in examples:** `here::here()` to build a directory from the project root, then
+  `fs::path()` to join a filename onto it (never nest `here()` inside `here()`);
+  `fs::dir_create()`; `read_csv(show_col_types = FALSE)`; `write_rds(..., compress = "gz")`.
+  Match these and the tidyverse-first style in the user's global instructions.
+- **The `.gitignore` split:** `cache/` and `results/figures/` ignored; `data/external/`,
+  `results/tables/` and the lockfiles (`renv.lock`, `pyproject.toml`) tracked. Raw data is
+  **ignore-the-bytes / commit-the-provenance**: `data/raw/*` ignored with
+  `!data/raw/MANIFEST.tsv` un-ignored, plus `scripts/00_fetch_data.R` to rebuild it. This
+  reversed an earlier "never gitignore `data/`" rule — do not flip it back.
 
 ## Working Notes
 
-- There is no `git` repository here yet. Do not assume version control commands work.
+- This **is** a git repository (`origin git@github.com:soccin/r-proj-org.git`, default branch
+  `master`). Work on a short-named branch; commit only when asked; never push unasked.
+- Keep the four cross-referencing documents in sync. A convention change touches
+  `README.md`, both `docs/recommendedConvention*.md`, `docs/projectLayoutNotes.md`, both
+  recipes, and this file. Grep before declaring a change done.
 - The behavioral guidelines below still apply to any edits.
 
 ---

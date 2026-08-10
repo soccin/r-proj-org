@@ -3,12 +3,10 @@
 For an **R-only** project (pipeline entirely in R; Python, if any, reached in-process via
 `reticulate`), use the sibling document **`recommendedConventionROnly.md`** instead.
 
-This reconciles the source documents in this repo into one recommended layout for
-projects that mix **R and Python** code:
-
-- `originals/r-project-organization.md` — provenance-based, numbered-stage pipeline for plain `.R` scripts.
-- `originals/R Working Analysis Directory Tree Template.txt` — the `workflowr` convention for
-  reproducible, publishable research websites built from `.Rmd`.
+This is the recommended layout for projects that mix **R and Python** code. It is
+self-contained: it absorbs the provenance-based, numbered-stage pipeline convention and the
+relevant parts of the `workflowr` scheme. The retired source documents those came from are
+listed in `../ATTIC.md`.
 
 It is also informed by the widely used Python layout,
 [Cookiecutter Data Science](https://cookiecutter-data-science.drivendata.org/), whose
@@ -44,9 +42,11 @@ Keeping these layers separate is what lets one project hold both languages witho
 ```
 project/
 ├── project.Rproj           # project-root anchor (keep even outside RStudio)
+│                           #   no RStudio? a bare .here file does the same job for R
 ├── .Rprofile               # runs on open; load R libs, set RETICULATE_PYTHON if used
 ├── .gitignore
 ├── README.md               # what this is; how to rebuild it; which languages do what
+├── run_all.sh              # runs the stages in order — the pipeline entry point
 │
 │  ── Environment / dependencies (one set per language; see note) ──
 ├── renv.lock               # R package versions (renv)
@@ -54,10 +54,11 @@ project/
 │   (or requirements.txt / environment.yml)
 │
 │  ── DATA: shared, language-neutral, named by provenance ──
-├── data/                   # IMMUTABLE inputs — never written by scripts, never gitignored
+├── data/                   # IMMUTABLE inputs — never written by scripts
 │   ├── raw/                #   exactly as received
+│   │   └── MANIFEST.tsv    #     provenance: name, size, md5, source, date
 │   ├── external/           #   reference data (annotations, gene lists, ...)
-│   └── README.md           #   provenance: where each file came from, when, from whom
+│   └── README.md           #   narrative: where the data came from, from whom, caveats
 │
 ├── cache/                  # REGENERABLE intermediates — safe to delete, gitignored
 │   ├── 01_tidy/            #   output dir prefix matches the script that made it
@@ -73,6 +74,7 @@ project/
 ├── python/                 # importable Python package / modules, NOT run as scripts
 │
 ├── scripts/                # the ordered pipeline — numbered across BOTH languages
+│   ├── 00_fetch_data.R     #   run once — rebuilds data/raw/ from its sources
 │   ├── 01_tidy_input.R     #   reads data/raw/      → writes cache/01_tidy/
 │   ├── 02_process.py       #   reads cache/01_tidy/ → writes cache/02_processed/
 │   └── 03_features.py      #   reads cache/02_...   → writes cache/03_features/
@@ -93,13 +95,15 @@ need exploration scratch space or a published report. The backbone above
 ## The Principles
 
 **1. Provenance is the primary axis — three write-tiers, shared by both languages.**
-- `data/` — came from *outside*; scripts (R or Python) only ever **read** it. Never gitignored.
+- `data/` — came from *outside*; scripts (R or Python) only ever **read** it.
 - `cache/` — *derived*; scripts write it, you can delete and regenerate it. Gitignored.
 - `results/` — *final* deliverables you actually report.
 
-The names carry intent: anyone sees `cache/` and knows it's disposable. (Cookiecutter Data
-Science encodes the same idea as `data/{raw,external,interim,processed}`; `interim` ≈ our
-staged `cache/`, `processed` ≈ analysis-ready output.)
+The names carry intent: anyone sees `cache/` and knows it's disposable. Read-only is a
+property of `data/`, not of whether it is tracked — see the `.gitignore` section for what
+gets committed. (Cookiecutter Data Science encodes the same idea as
+`data/{raw,external,interim,processed}`; `interim` ≈ our staged `cache/`, `processed` ≈
+analysis-ready output.)
 
 **2. Number the pipeline stages — across both languages.** A stage's script and its output
 dir share a prefix (`02_process.py` → `cache/02_processed/`), and stages are numbered in
@@ -119,10 +123,16 @@ no matter the language.
 
 **5. Anchor the project root.** A `.Rproj` (or equivalent root marker) plus `.Rprofile`
 means `here::here()` (R) and project-relative paths (Python) resolve identically regardless
-of working directory.
+of working directory. On the R side `here()` finds the root by searching upward for that
+anchor; outside RStudio, `here::set_here()` writes a bare `.here` file that serves the same
+purpose. Without an anchor `here()` falls back to the working directory and every path
+silently resolves somewhere else.
 
-**6. Document provenance with a `data/README.md`.** Recording where each raw file came from
-is the single highest-value reproducibility habit, and it's language-independent.
+**6. Document provenance.** `data/raw/MANIFEST.tsv` records one row per raw file — name,
+size, md5, source (URL or accession), date received — and `data/README.md` carries the
+narrative a table cannot. Both are plain text and language-independent. This is the single
+highest-value reproducibility habit, and once raw bytes are untracked (below) the manifest
+is the only record that they were what you think they were.
 
 ---
 
@@ -133,6 +143,8 @@ stage in the *same* language, use that language's native serialization — it's 
 needs nothing extra:
 
 - R → R: `.rds` (`readr::write_rds()` / `read_rds()`) — preserves factors, dates, list cols.
+  Pass `compress = "gz"`: `readr::write_rds()` defaults to `compress = "none"`, unlike base
+  `saveRDS()`, so intermediates otherwise land several times larger than expected.
 - Python → Python: the project's normal in-language format (e.g. pickle, feather-if-already-present).
 
 **Crossing the R ↔ Python boundary: use CSV or XLSX.** When an R stage feeds a Python stage
@@ -152,6 +164,31 @@ So a typical seam looks like:
 cache/01_tidy/samples_tidy.rds      # R wrote it, an R stage reads it     (native)
 cache/01_tidy/samples_for_py.csv    # R wrote it, a Python stage reads it (handoff → CSV)
 ```
+
+---
+
+## Running the Pipeline
+
+The numbered filenames *document* the execution order. An entry point *enforces* it. Because
+the stages span two languages, a plain shell script is the honest choice — it adds nothing
+and runs each stage with the right interpreter:
+
+```sh
+#!/usr/bin/env bash
+# run_all.sh — run from the project root
+set -euo pipefail
+
+# Rscript scripts/00_fetch_data.R      # run once — populates data/raw/
+
+Rscript scripts/01_tidy_input.R
+python  scripts/02_process.py
+python  scripts/03_features.py
+```
+
+Keeping this file working is the cheapest reproducibility check available: if it does not
+run end to end in a fresh session, the project is not reproducible, whatever the directory
+structure suggests. (In an R-only project this is a `run_all.R` that `source()`s each stage
+— see the sibling document.)
 
 ---
 
@@ -179,6 +216,10 @@ results/figures/
 # Rendered report (only if using analysis/)
 analysis/docs/
 
+# Raw data: ignore the bytes, commit the provenance
+data/raw/*
+!data/raw/MANIFEST.tsv
+
 # Language environments
 renv/             # R project library (keep renv.lock, ignore the library)
 .venv/            # Python virtualenv
@@ -186,21 +227,48 @@ __pycache__/
 *.pyc
 
 # NOT ignored:
-#   data/           <- precious; version-control or document provenance in data/README.md
+#   data/external/  <- reference files are usually small; commit them
 #   results/tables/ <- usually small; useful to track changes over time
 #   renv.lock, pyproject.toml  <- the reproducibility record
 ```
 
+Large inputs — FASTQs, BAMs, count matrices — have to stay out of git. History is
+append-only, so a single accidental multi-gigabyte commit permanently inflates every future
+clone, and deleting the file later does not undo it.
+
+Ignoring the bytes does not mean giving up the guarantee. Commit two small things instead:
+
+- **`data/raw/MANIFEST.tsv`** — one row per file: name, size, md5, source (URL or
+  accession), date received.
+- **`scripts/00_fetch_data.R`** — the code that rebuilds `data/raw/` from those sources.
+
+Together they run to a few kilobytes and reconstruct the input state exactly, which is what
+committing the files was meant to buy in the first place.
+
+Small inputs are the exception worth naming: a 200-row gene list, a sample sheet, a config
+table all belong in git directly. Add an explicit un-ignore for each
+(`!data/raw/samplesheet.csv`). The rule is about size, not about which directory a file
+lives in.
+
+One mechanical detail: the pattern must be `data/raw/*`, not `data/raw/`. Git cannot
+re-include a file whose parent *directory* is excluded, so ignoring the directory itself
+would silently make the `!data/raw/MANIFEST.tsv` line a no-op.
+
 ---
 
-## Reconciling the Two Source Docs
+## Why Staged `cache/`, Not `data/processed` or a Flat `output/`
 
-The custom doc and `workflowr` disagree in one place: `workflowr` puts all processed data
-in a single flat `output/`; the custom doc uses staged, numbered `cache/`. **Prefer staged
-`cache/`** — the custom doc's own argument holds: flat `output/` doesn't scale past two
-stages and is ambiguous about immutability, whereas numbered stages scale to any depth and
-stay self-documenting. If you adopt `workflowr` for its `.Rmd` → website tooling, redirect
-its processed-data writes into `cache/NN_stage/` and keep `docs/` strictly for rendered HTML.
+Two common alternatives, and why this layout rejects both.
+
+**`data/processed/`** (and Cookiecutter's `data/interim` + `data/processed`) conflates the
+immutability guarantee of `data/` — a newcomer, or future-you, no longer knows what is safe
+to delete. It also doesn't scale past two stages; you end up with `data/processed_v2/` or
+timestamped directory names.
+
+**`workflowr`'s flat `output/`** has the same scaling problem and is equally ambiguous about
+immutability. Numbered `cache/` stages scale to any depth and stay self-documenting. If you
+adopt `workflowr` for its `.Rmd` → website tooling, redirect its processed-data writes into
+`cache/NN_stage/` and keep `docs/` strictly for rendered HTML.
 
 ---
 
