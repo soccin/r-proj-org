@@ -113,7 +113,7 @@ halted for approval.
 ## Phase D — Migrate (only after approval) → verify
 
 Preconditions: human approved; git repo with a **clean** working tree (commit/stash first if
-not). 
+not).
 
 1. Create a branch: `git checkout -b chore/project-layout` (short name, per repo style).
 2. Create the target skeleton dirs (mirror `recipeNewProject.md` Step 1, language-aware).
