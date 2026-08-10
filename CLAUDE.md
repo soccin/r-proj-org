@@ -53,20 +53,39 @@ optional `analysis/`+`docs/` layer. Don't reintroduce that conflict.
   `cache/` is regenerable intermediate output; `results/` is final output. Read-only is about
   *writes*, not about *tracking* — see the gitignore rule below.
 - **Numbered pipeline stages:** scripts and their output dirs share a prefix
-  (`01_tidy_input.R` → `cache/01_tidy/`), so the dependency graph is visible in filenames.
-  In the mixed doc the numbering spans both languages. A `run_all.R` (R-only) or `run_all.sh`
-  (mixed) at the root enforces the order the filenames only document.
+  (`01_tidy_input.R` → `cache/run02/01_tidy/`), so the dependency graph is visible in
+  filenames. In the mixed doc the numbering spans both languages. A `run_all.R` (R-only) or
+  `run_all.sh` (mixed) at the root enforces the order the filenames only document.
+- **The run axis is secondary to provenance, and separate from the stage axis.** A project
+  runs more than once, so `cache/` and `results/` carry a run directory level — run outermost,
+  stage one level down (`cache/run02/01_tidy/`, `results/run02/{figures,tables}`). **`data/`
+  never gets a run level**, and a run is **never** a filename token: collapsing run and stage
+  into one name (`proj_v1.01_raw.rds`) is the exact failure this axis exists to prevent. The
+  current run is a top-level `run:` key in **`00.PARAMS.yml`** at the project root —
+  deliberately language-neutral, deliberately standing alone rather than buried in an R config
+  file, and required to be top-level so shell can `awk` it without a parser. Everything else
+  in that file is the project's own namespace (`params:`, `args:`, `const:` — the convention
+  does not care). The entry point copies `00.PARAMS.yml` into `results/<run>/` before stage
+  01, which is the `MANIFEST.tsv` provenance argument applied to outputs. Bump `run:` when
+  parameters change, not when fixing a bug; nothing enforces this and nothing should. Per-run
+  `cache/` may be symlinked at a previous run's stage dir when that stage is genuinely
+  unchanged.
 - **Data is shared, code splits by language.** The data backbone is language-neutral; only
   code/environment dirs differ between the two docs.
 - **No new dependencies / no proprietary interchange formats** (a hard constraint from the
   user). These are layout docs, not toolchain mandates. R-native intermediates use `.rds`;
   cross-language file handoff, when unavoidable, is **CSV or XLSX only** — never Parquet/Arrow.
+  **Exactly one exception exists:** a YAML reader (`yaml` / `pyyaml`) for `00.PARAMS.yml`,
+  taken knowingly because the alternative broke language neutrality. Do not treat it as
+  precedent, and do not add a second.
 - **R idioms in examples:** `here::here()` to build a directory from the project root, then
   `fs::path()` to join a filename onto it (never nest `here()` inside `here()`);
   `fs::dir_create()`; `read_csv(show_col_types = FALSE)`; `write_rds(..., compress = "gz")`.
   Match these and the tidyverse-first style in the user's global instructions.
-- **The `.gitignore` split:** `cache/` and `results/figures/` ignored; `data/external/`,
-  `results/tables/` and the lockfiles (`renv.lock`, `pyproject.toml`) tracked. Raw data is
+- **The `.gitignore` split:** `cache/` and `results/*/figures/` ignored; `data/external/`,
+  `results/*/tables/`, `results/*/00.PARAMS.yml`, the root `00.PARAMS.yml` and the lockfiles
+  (`renv.lock`, `pyproject.toml`) tracked. The figures glob must keep its run wildcard — a
+  bare `results/figures/` matches nothing now. Raw data is
   **ignore-the-bytes / commit-the-provenance**: `data/raw/*` ignored with
   `!data/raw/MANIFEST.tsv` un-ignored, plus `scripts/00_fetch_data.R` to rebuild it. This
   reversed an earlier "never gitignore `data/`" rule — do not flip it back.
@@ -78,6 +97,12 @@ optional `analysis/`+`docs/` layer. Don't reintroduce that conflict.
 - Keep the four cross-referencing documents in sync. A convention change touches
   `README.md`, both `docs/recommendedConvention*.md`, `docs/projectLayoutNotes.md`, both
   recipes, and this file. Grep before declaring a change done.
+- **Open question — how a released run is marked.** A run whose outputs went to a
+  collaborator must never be overwritten; that rule is stated in both convention docs. The
+  *mechanism* is deliberately unspecified pending the user's own experiments — candidates are
+  a sub-folder inside the run dir, a git tag, and a `results/MANIFEST.tsv`. Do not invent one.
+  Document-revision versioning (`METHODS_v1` → `v2`) is a third thing and needs no convention
+  at all; resist formalizing it.
 - The behavioral guidelines below still apply to any edits.
 
 ---
