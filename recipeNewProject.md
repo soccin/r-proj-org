@@ -65,8 +65,12 @@ Create placeholder files so empty dirs are tracked and intent is documented:
   (`renv::restore()`, then `scripts/00_fetch_data.R` once, then the entry point), and which
   languages do what.
 - An **entry point** at the root: `run_all.R` for R-only (`source(here("scripts", "NN_....R"))`
-  per stage) or `run_all.sh` for mixed (`Rscript` / `python` per stage, `set -euo pipefail`).
-  Create it with the stages commented out; uncomment as stages are written.
+  per stage) or `run_all.sh` for mixed. For the shell version copy the block under "Running
+  the Pipeline" in `docs/recommendedConvention.md`: `set -euo pipefail`, `Rscript` for `.R`
+  stages, and `"$PYTHON"` — set once as `PYTHON="${PYTHON:-.venv/bin/python}"` — for `.py`
+  stages. Do not emit a bare `python`; it resolves to whatever is on `PATH`, which is not the
+  environment the lockfiles describe. Create it with the stages commented out; uncomment as
+  stages are written.
 - A **root anchor**: `project.Rproj`, or a bare `.here` file if not using RStudio. Without
   one, `here::here()` silently resolves to the working directory.
 

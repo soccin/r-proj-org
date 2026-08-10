@@ -178,12 +178,23 @@ and runs each stage with the right interpreter:
 # run_all.sh — run from the project root
 set -euo pipefail
 
+# The project's interpreter, not whatever `python` PATH happens to resolve to.
+PYTHON="${PYTHON:-.venv/bin/python}"
+
 # Rscript scripts/00_fetch_data.R      # run once — populates data/raw/
 
 Rscript scripts/01_tidy_input.R
-python  scripts/02_process.py
-python  scripts/03_features.py
+"$PYTHON" scripts/02_process.py
+"$PYTHON" scripts/03_features.py
 ```
+
+A bare `python` is the one thing worth being careful about here. It resolves against `PATH`,
+which in a fresh shell is usually the system interpreter — none of the deps in
+`pyproject.toml`, and on macOS possibly no `python` at all. Pointing at the project's venv
+makes the stages run against the environment the lockfiles describe. If you use conda or put
+the venv elsewhere, override it (`PYTHON=$(which python) ./run_all.sh`) or activate the
+environment before running. `Rscript` needs no equivalent because `renv` activates the
+project library from `.Rprofile` on startup.
 
 Keeping this file working is the cheapest reproducibility check available: if it does not
 run end to end in a fresh session, the project is not reproducible, whatever the directory
