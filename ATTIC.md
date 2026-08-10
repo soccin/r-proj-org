@@ -11,10 +11,18 @@ live one at a glance.
 To read a retired file:
 
 ```sh
-git show <ref>:<path>                      # print it
-git show <ref>:<path> > /tmp/recovered.md  # save it
-git log --all -- <path>                    # every commit that touched it
+git show '<ref>:<path>'                      # print it
+git show '<ref>:<path>' > /tmp/recovered.md  # save it
+git log --all -- '<path>'                    # every commit that touched it
 ```
+
+Quote the argument. One of the retired filenames contains spaces, and unquoted the shell
+splits it into separate arguments — `git show` then reports that `docs/originals/R` does not
+exist, which reads like a wrong path rather than a quoting slip.
+
+Paths are given **as they were at the listed ref**. The two `docs/originals/` files lived at
+a top-level `originals/` before `764fd8f` moved them; `git log --all --follow` from the
+`docs/originals/` path picks up that rename.
 
 ## Retired documents
 

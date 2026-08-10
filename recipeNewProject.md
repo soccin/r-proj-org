@@ -60,8 +60,12 @@ Create placeholder files so empty dirs are tracked and intent is documented:
   Add a `params:` block only if the user already knows the project's parameters; the
   namespace under `run:` is the project's own. The value is used **verbatim** as the run
   directory name, so it must match the `results/<run>/` dir created above.
-- `data/raw/MANIFEST.tsv` — header row only: `file`, `bytes`, `md5`, `source`, `date`. This
-  is the tracked record of raw inputs whose bytes are not committed (Step 3).
+- `data/raw/MANIFEST.tsv` — header row only: `name`, `size`, `md5`, `source`, `date` (the
+  columns the convention docs specify). This is the tracked record of raw inputs whose bytes
+  are not committed (Step 3).
+- `scripts/00_fetch_data.R` — a stub, commented out, that rebuilds `data/raw/` from the
+  sources named in the manifest. It is the manifest's other half: together they are what
+  makes ignoring the raw bytes safe (Step 3), so create it now even while it is empty.
 - `data/README.md` — the narrative a table can't hold: who provided the data, under what
   terms, known caveats.
 - `cache/.gitkeep`, `results/run01/figures/.gitkeep`, `results/run01/tables/.gitkeep`.
@@ -69,15 +73,20 @@ Create placeholder files so empty dirs are tracked and intent is documented:
   (`renv::restore()`, then `scripts/00_fetch_data.R` once, then the entry point), and which
   languages do what.
 - An **entry point** at the root: `run_all.R` for R-only (`source(here("scripts", "NN_....R"))`
-  per stage) or `run_all.sh` for mixed (`Rscript` / `python` per stage, `set -euo pipefail`).
-  Create it with the stages commented out; uncomment as stages are written. Before the stages,
-  it must read `run:` from `00.PARAMS.yml`, create `results/<run>/`, and copy `00.PARAMS.yml`
-  into it — see "Running the Pipeline" in the matching convention doc for the exact snippet.
+  per stage) or `run_all.sh` for mixed. For the shell version copy the block under "Running
+  the Pipeline" in `docs/recommendedConvention.md`: `set -euo pipefail`, `Rscript` for `.R`
+  stages, and `"$PYTHON"` — set once as `PYTHON="${PYTHON:-.venv/bin/python}"` — for `.py`
+  stages. Do not emit a bare `python`; it resolves to whatever is on `PATH`, which is not the
+  environment the lockfiles describe. Before the stages, it must read `run:` from
+  `00.PARAMS.yml`, create `results/<run>/`, and copy `00.PARAMS.yml` into it — the same block
+  shows this. Create it with the stages commented out; uncomment as stages are written.
 - A **root anchor**: `project.Rproj`, or a bare `.here` file if not using RStudio. Without
   one, `here::here()` silently resolves to the working directory.
 
 **Verify:** the tree matches the "Recommended Structure" block in the matching convention
-doc (minus any optional layers). List the created paths.
+doc (minus any optional layers) — including `scripts/00_fetch_data.R`, the root anchor and
+the entry point, which the structure block lists and which are easy to skip. List the
+created paths.
 
 ---
 

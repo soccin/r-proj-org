@@ -397,7 +397,7 @@ rendered HTML.
 ## Sources
 
 - [workflowr getting started](https://jdblischak.github.io/workflowr/articles/wflow-01-getting-started.html)
-  — the `analysis/` + `docs/` literate-website convention (also captured in this repo's `.txt`).
+  — the `analysis/` + `docs/` literate-website convention.
 - [reticulate: R interface to Python](https://rstudio.github.io/reticulate/) — calling Python
   in-process from R.
 - [Reproducible environments for R and Python](https://occasionaldivergences.com/posts/rep-env/)

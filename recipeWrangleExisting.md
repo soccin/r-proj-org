@@ -109,7 +109,7 @@ Write `MIGRATION-PLAN.md` in the project root containing:
 5. **`.gitignore` changes** to add (`cache/`, `results/*/figures/`, env dirs, and
    `data/raw/*` + `!data/raw/MANIFEST.tsv`), plus the list of already-tracked files that will
    need `git rm --cached`.
-6. **Raw-data provenance:** the `data/raw/MANIFEST.tsv` you will generate (file, bytes, md5,
+6. **Raw-data provenance:** the `data/raw/MANIFEST.tsv` you will generate (name, size, md5,
    source, date) and what is known about where each file came from. Flag every file whose
    source you cannot determine — an untracked raw file with no recorded origin is
    unrecoverable, so those must be resolved before Phase D, or the file stays tracked.
@@ -140,7 +140,7 @@ not).
    `here::here(...)`. This is the only code change allowed.
 5. Apply the `.gitignore` changes. If derived outputs were previously committed, untrack them
    with `git rm -r --cached cache/ results/*/figures/` (keeps files on disk, stops tracking).
-6. **Write `data/raw/MANIFEST.tsv` before untracking any raw bytes** — file, bytes, md5,
+6. **Write `data/raw/MANIFEST.tsv` before untracking any raw bytes** — name, size, md5,
    source, date, one row per file. Then untrack the large ones with
    `git rm --cached <file>` (never plain `git rm`). Leave small inputs tracked and give each
    an explicit `!data/raw/<name>` un-ignore. Untracking removes them from the *next* commit
