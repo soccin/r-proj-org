@@ -36,16 +36,20 @@ deliverables are the Markdown documents below.
 | `docs/recommendedConvention.md` | Canonical layout — R + Python |
 | `docs/recommendedConventionROnly.md` | Canonical layout — R-only |
 | `docs/projectLayoutNotes.md` | Portable carry-along summary + the standing constraints |
-| `docs/originals/` | The two source documents the conventions were reconciled from |
 | `CLAUDE.md` | Guidance for AI agents working *in this repo* |
+| `ATTIC.md` | Retired documents and the refs they can be recovered from |
 
 ## The core idea, in brief
 
-- `data/` — immutable inputs; scripts only read it, never write it (never gitignored).
+- `data/` — immutable inputs; scripts only read it, never write it.
 - `cache/` — regenerable intermediates; scripts write it, safe to delete (gitignored).
 - `results/` — final figures and tables.
 - Number pipeline stages so a script and its output dir share a prefix
-  (`02_process.R` → `cache/02_processed/`).
+  (`02_process.R` → `cache/02_processed/`), and give the project an entry point
+  (`run_all.R` / `run_all.sh`) that runs them in order.
+- For large raw inputs, **ignore the bytes and commit the provenance**: `data/raw/*` is
+  gitignored except `data/raw/MANIFEST.tsv`, and `scripts/00_fetch_data.R` rebuilds the
+  directory from source.
 - Data is shared and language-neutral; only the code layer differs between R-only and mixed.
 
 See [`docs/projectLayoutNotes.md`](docs/projectLayoutNotes.md) for the standing constraints these
