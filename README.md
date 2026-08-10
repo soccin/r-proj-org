@@ -45,8 +45,12 @@ deliverables are the Markdown documents below.
 - `cache/` — regenerable intermediates; scripts write it, safe to delete (gitignored).
 - `results/` — final figures and tables.
 - Number pipeline stages so a script and its output dir share a prefix
-  (`02_process.R` → `cache/02_processed/`), and give the project an entry point
+  (`02_process.R` → `cache/run02/02_processed/`), and give the project an entry point
   (`run_all.R` / `run_all.sh`) that runs them in order.
+- A project runs more than once, so **runs are a second axis** — a directory level on
+  `cache/` and `results/` only, never a filename token and never under `data/`. The current
+  run id is a top-level `run:` key in `00.PARAMS.yml` at the project root, a language-neutral
+  file every stage reads.
 - For large raw inputs, **ignore the bytes and commit the provenance**: `data/raw/*` is
   gitignored except `data/raw/MANIFEST.tsv`, and `scripts/00_fetch_data.R` rebuilds the
   directory from source.
