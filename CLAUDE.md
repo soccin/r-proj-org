@@ -75,6 +75,12 @@ optional `analysis/`+`docs/` layer. Don't reintroduce that conflict.
   unchanged.
 - **Data is shared, code splits by language.** The data backbone is language-neutral; only
   code/environment dirs differ between the two docs.
+- **Report sources never sit in the project root** (the user's rule, 2026-09-25: keep the
+  root short). `.Rmd`/`.qmd` go in `analysis/`, exploration in `notebooks/`. They run with
+  `analysis/` as the working directory, so paths come from `here::here()`. A report on one
+  run renders into `results/<run>/`; `analysis/docs/` is kept only for a published workflowr
+  site. Quarto is rendered from inside `analysis/` with `--output-dir ../results/<run>`;
+  from the root with `--output-dir` it fails (Quarto 1.10.18, self-contained html).
 - **No new dependencies / no proprietary interchange formats** (a hard constraint from the
   user). These are layout docs, not toolchain mandates. R-native intermediates use `.rds`;
   cross-language file handoff, when unavoidable, is **CSV or XLSX only** — never Parquet/Arrow.

@@ -87,12 +87,12 @@ project/
 ├── notebooks/              # OPTIONAL exploratory work (.ipynb and/or .Rmd)
 │                           #   name: NN_initials_topic, e.g. 01_ns_data-overview
 │
-└── analysis/               # OPTIONAL literate report layer (workflowr-style .Rmd)
-    └── docs/               #   rendered HTML/figures (only if publishing a site)
+└── analysis/               # OPTIONAL report sources (.Rmd / .qmd) — never in the root
+    └── docs/               #   rendered site (only if publishing one; workflowr)
 ```
 
 The `notebooks/` and `analysis/` blocks are **optional** — include them only when you
-need exploration scratch space or a published report. The backbone above
+need exploration scratch space or a report. The backbone above
 (`data/` → `scripts/` → `cache/` → `results/`, with `R/` + `python/`) stands alone.
 
 ---
@@ -310,6 +310,38 @@ actually used, and it is tracked in git alongside that run's tables. This is the
 
 ---
 
+## Reports
+
+**Report sources never sit in the project root.** The root holds the entry point,
+`00.PARAMS.yml`, the README and the anchor files. Every `.Rmd`, `.qmd` or `.ipynb` goes in a
+subdirectory: `analysis/` for a report, `notebooks/` for exploration.
+
+**A report on one run renders into that run's results dir,** `results/<run>/`, beside the
+tables it describes. It reads `cache/<run>/` and does no slow work of its own; the stages
+did that. `analysis/docs/` is only for a published site.
+
+**Build paths from the root anchor.** knitr and Quarto run the code with the document's
+directory as the working directory, so inside `analysis/` a bare `"00.PARAMS.yml"` does not
+resolve. Use `here::here()` (principle 5):
+
+```r
+PARAMS <- yaml::read_yaml(here("00.PARAMS.yml"))
+```
+
+**Render Quarto from inside `analysis/`:**
+
+```sh
+cd analysis
+quarto render report01_summary.qmd --output-dir ../results/run02
+```
+
+Rendering `analysis/report01_summary.qmd` from the project root with `--output-dir` fails
+for a self-contained html (`embed-resources: true`, Quarto 1.10.18): the chunks run, then
+post-processing looks for the `report01_summary_files/` support dir in the directory Quarto
+was started from instead of beside the document, and leaves an incomplete html behind.
+
+---
+
 ## Environments / Dependencies
 
 Each language manages its own dependencies; both lockfiles live at the project root.
@@ -331,7 +363,7 @@ layout above works with the two ecosystems kept entirely separate.
 cache/
 results/*/figures/
 
-# Rendered report (only if using analysis/)
+# Rendered site (only if publishing one from analysis/)
 analysis/docs/
 
 # Raw data: ignore the bytes, commit the provenance
@@ -402,7 +434,8 @@ adopt `workflowr` for its `.Rmd` → website tooling, redirect its processed-dat
 | --- | --- |
 | Pure scripted processing (R and/or Python), no report | backbone only (`data/`→`scripts/`→`cache/`→`results/`) |
 | The above, plus exploration | add `notebooks/` |
-| The above, plus a narrative report or published site | add the `analysis/` + `docs/` layer (`workflowr`) |
+| The above, plus a narrative report | add `analysis/` for the `.Rmd`/`.qmd`; render into `results/<run>/` — see Reports |
+| The above, plus a published site | add `analysis/docs/` (`workflowr`) |
 | A second pass with different parameters | bump `run:` in `00.PARAMS.yml` — see The Run Axis |
 | A one-off exploratory script | a single script reading `data/`, writing `results/` — don't over-build |
 

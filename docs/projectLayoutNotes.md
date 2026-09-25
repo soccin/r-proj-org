@@ -64,4 +64,7 @@ share a prefix (`02_process.R` → `cache/run02/02_processed/`), and give the pr
 from `MANIFEST.tsv` plus `scripts/00_fetch_data.R`. Data is shared and language-neutral; only
 the code layer splits by language. Staged `cache/` is preferred over both `data/processed/`
 and a flat `output/`; `workflowr` is retained only as an optional `analysis/`+`docs/`
-reporting layer.
+reporting layer. Report sources (`.Rmd`, `.qmd`) never sit in the project root: they go in
+`analysis/` (exploration in `notebooks/`), build paths with `here::here()` because they run
+with `analysis/` as the working directory, and a report on one run renders into
+`results/<run>/`; `analysis/docs/` is only for a published site.

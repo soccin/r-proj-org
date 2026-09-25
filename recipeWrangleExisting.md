@@ -70,6 +70,8 @@ This is the core analysis. For each non-trivial file/dir, assign a target tier:
 | Reusable function definitions (sourced, not run) | `R/` (or `python/<pkg>/` if mixed) |
 | An ordered pipeline script | `scripts/` (numbered) |
 | Exploratory notebook | `notebooks/` |
+| Report source (`.Rmd`/`.qmd`), including one in the root | `analysis/` |
+| A rendered report on one run (`.html`, `.pdf`, `.docx`) | `results/<run>/` |
 
 Rules while classifying:
 - **Provenance is decided by how a file is produced, not its extension.** A `.csv` can be raw

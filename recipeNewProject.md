@@ -26,8 +26,10 @@ Decide, by asking the user if unstated:
     `docs/recommendedConventionROnly.md`. **Do not create `python/`.**
   - *R + Python* — standalone `.py` pipeline stages alongside `.R`. Follow
     `docs/recommendedConvention.md`. **Create `python/` and a Python dep file.**
-- **Optional layers wanted?** `notebooks/` (exploration), `analysis/` + `docs/` (workflowr
-  report/site). Default: skip both unless asked.
+- **Optional layers wanted?** `notebooks/` (exploration), `analysis/` (report sources,
+  `.Rmd`/`.qmd`, rendered into `results/<run>/`), `analysis/docs/` (a published workflowr
+  site). Default: skip all three unless asked. Never put an `.Rmd` or `.qmd` in the project
+  root; see the Reports section of the convention doc.
 
 **Verify:** restate the chosen shape (dir, R-only vs mixed, which optional layers) in one
 line before creating anything.
@@ -119,7 +121,7 @@ Create `.gitignore` at root:
 cache/
 results/*/figures/
 
-# Rendered report (only if using analysis/)
+# Rendered site (only if publishing one from analysis/)
 analysis/docs/
 
 # Raw data: ignore the bytes, commit the provenance
@@ -141,7 +143,7 @@ __pycache__/
 ```
 
 Drop the `.venv/`/`__pycache__/` lines for an R-only project; drop the `analysis/docs/` line
-if no `analysis/` layer.
+if the project publishes no site.
 
 The raw-data rule is **ignore the bytes, commit the provenance** — `MANIFEST.tsv` plus
 `scripts/00_fetch_data.R` reconstruct `data/raw/` in a few kilobytes, without a

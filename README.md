@@ -54,6 +54,8 @@ deliverables are the Markdown documents below.
 - For large raw inputs, **ignore the bytes and commit the provenance**: `data/raw/*` is
   gitignored except `data/raw/MANIFEST.tsv`, and `scripts/00_fetch_data.R` rebuilds the
   directory from source.
+- Report sources (`.Rmd`, `.qmd`) go in `analysis/` (exploration in `notebooks/`), never in
+  the project root; a report on one run renders into `results/<run>/`.
 - Data is shared and language-neutral; only the code layer differs between R-only and mixed.
 
 See [`docs/projectLayoutNotes.md`](docs/projectLayoutNotes.md) for the standing constraints these
